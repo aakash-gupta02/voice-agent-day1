@@ -1,17 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Voice Agent - Day 3</title>
-</head>
-<body>
-  <h1>🎤 AI Voice Agent - Day 3</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Voice Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen p-6 font-sans">
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded shadow">
+      <h1 class="text-4xl font-bold text-center mb-8 text-indigo-600">🎤 AI Voice Agent</h1>
 
-  <input type="text" id="text-input" placeholder="Enter text to convert..." />
-  <button onclick="generateAudio()">Generate Audio</button>
+      <!-- TTS Section -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">🗣 Text to Speech</h2>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            id="text-input"
+            placeholder="Enter text to convert..."
+            class="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <button
+            onclick="generateAudio()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded"
+          >
+            Generate Audio
+          </button>
+        </div>
+        <div id="audio-container" class="mt-6 text-gray-700"></div>
+      </section>
 
-  <div id="audio-container" style="margin-top: 20px;"></div>
+      <!-- Echo Bot Section -->
+      <section>
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">🪞 Echo Bot</h2>
+        <div class="flex gap-4 mb-4">
+          <button
+            id="start-btn"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
+          >
+            🎙 Start Recording
+          </button>
+          <button
+            id="stop-btn"
+            disabled
+            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded disabled:opacity-50"
+          >
+            ⏹ Stop Recording
+          </button>
+        </div>
+        <div id="recording-result" class="text-gray-700"></div>
+      </section>
+    </div>
 
-  <script src="/static/main.js"></script>
-</body>
+    <script src="/static/main.js"></script>
+  </body>
 </html>
