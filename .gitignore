@@ -43,3 +43,4 @@ build/
 
 # Node modules (if using npm later)
 node_modules/
+uploads/

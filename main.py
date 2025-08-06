@@ -3,9 +3,18 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import requests
-from config import MURF_API_KEY  # this pulls from .env
+from config import MURF_API_KEY
+
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import JSONResponse
+import os
+from datetime import datetime
+
 
 app = FastAPI()
+
+UPLOAD_DIR = "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Serve static frontend files
 app.mount("/static", StaticFiles(directory="."), name="static")
@@ -50,3 +59,18 @@ def generate_audio(data: TextInput):
         }
     else:
         return {"error": response.json()}
+
+
+@app.post("/upload-audio")
+async def upload_audio(file: UploadFile = File(...)):
+    filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
+    file_location = os.path.join(UPLOAD_DIR, filename)
+
+    with open(file_location, "wb") as buffer:
+        buffer.write(await file.read())
+
+    return {
+        "filename": filename,
+        "content_type": file.content_type,
+        "size": os.path.getsize(file_location),
+    }

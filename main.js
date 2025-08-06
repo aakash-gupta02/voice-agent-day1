@@ -3,6 +3,7 @@ let recordedChunks = [];
 
 const startBtn = document.getElementById("start-btn");
 const stopBtn = document.getElementById("stop-btn");
+const statusText = document.getElementById("upload-status");
 
 startBtn.addEventListener("click", async () => {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -11,7 +12,7 @@ startBtn.addEventListener("click", async () => {
   }
 
   console.log("Starting audio recording...");
-  
+
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   mediaRecorder = new MediaRecorder(stream);
   recordedChunks = [];
@@ -22,7 +23,7 @@ startBtn.addEventListener("click", async () => {
     }
   };
 
-  mediaRecorder.onstop = () => {
+  mediaRecorder.onstop = async () => {
     const audioBlob = new Blob(recordedChunks, { type: "audio/webm" });
     const audioURL = URL.createObjectURL(audioBlob);
 
@@ -31,6 +32,25 @@ startBtn.addEventListener("click", async () => {
       <p>🎧 Here's your Echo:</p>
       <audio controls src="${audioURL}" autoplay></audio>
     `;
+
+    // Upload logic
+    statusText.textContent = "⏳ Uploading...";
+    const formData = new FormData();
+    formData.append("file", audioBlob, "recording.webm");
+
+    try {
+      const response = await fetch("/upload-audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      statusText.textContent = `✅ Uploaded: ${result.filename} (${result.content_type}, ${result.size} bytes)`;
+      console.log("Upload successful:", result);
+    } catch (error) {
+      statusText.textContent = "❌ Upload failed.";
+      console.error("Upload error:", error);
+    }
   };
 
   mediaRecorder.start();
@@ -39,7 +59,6 @@ startBtn.addEventListener("click", async () => {
 });
 
 stopBtn.addEventListener("click", () => {
-
   if (!mediaRecorder || mediaRecorder.state === "inactive") {
     alert("No recording in progress.");
     return;
