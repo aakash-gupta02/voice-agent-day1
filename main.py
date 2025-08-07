@@ -1,31 +1,34 @@
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, UploadFile, File
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import requests
-from config import MURF_API_KEY
-
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import JSONResponse
 import os
 from datetime import datetime
+import assemblyai as aai
+from config import MURF_API_KEY
+from config import ASSEMBLY_API_KEY  
 
-
+# Initialize FastAPI
 app = FastAPI()
 
+# Setup Uploads
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Serve static frontend files
 app.mount("/static", StaticFiles(directory="."), name="static")
 
+# Root HTML
 @app.get("/")
 def read_index():
     return FileResponse("index.html")
 
+# Text-to-Speech Input Schema
 class TextInput(BaseModel):
     text: str
 
+# Generate Speech using Murf.ai
 @app.post("/generate-audio")
 def generate_audio(data: TextInput):
     headers = {
@@ -61,6 +64,7 @@ def generate_audio(data: TextInput):
         return {"error": response.json()}
 
 
+# Upload Audio File
 @app.post("/upload-audio")
 async def upload_audio(file: UploadFile = File(...)):
     filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}"
@@ -74,3 +78,26 @@ async def upload_audio(file: UploadFile = File(...)):
         "content_type": file.content_type,
         "size": os.path.getsize(file_location),
     }
+
+
+# Transcribe Uploaded Audio File
+@app.post("/transcribe/file")
+async def transcribe_audio(file: UploadFile = File(...)):
+
+    aai.settings.api_key = ASSEMBLY_API_KEY
+    config = aai.TranscriptionConfig(speech_model=aai.SpeechModel.best)
+
+    # Read binary content
+    audio_bytes = await file.read()
+    # print("Audio bytes read successfully", audio_bytes )
+
+    try:
+        transcript = aai.Transcriber(config=config).transcribe(audio_bytes)
+
+        print("Transcription result:", transcript)
+        
+        if transcript.status == "error":
+            return JSONResponse(status_code=500, content={"error": transcript.error})
+        return {"transcript": transcript.text}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})

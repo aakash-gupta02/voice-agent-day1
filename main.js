@@ -11,7 +11,7 @@ startBtn.addEventListener("click", async () => {
     return;
   }
 
-  console.log("Starting audio recording...");
+  console.log("🎙️ Starting audio recording...");
 
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
   mediaRecorder = new MediaRecorder(stream);
@@ -33,8 +33,7 @@ startBtn.addEventListener("click", async () => {
       <audio controls src="${audioURL}" autoplay></audio>
     `;
 
-    // Upload logic
-    statusText.textContent = "⏳ Uploading...";
+    statusText.textContent = "⏳ Uploading & transcribing...";
     const formData = new FormData();
     formData.append("file", audioBlob, "recording.webm");
 
@@ -45,17 +44,34 @@ startBtn.addEventListener("click", async () => {
       });
 
       const result = await response.json();
-      statusText.textContent = `✅ Uploaded: ${result.filename} (${result.content_type}, ${result.size} bytes)`;
-      console.log("Upload successful:", result);
+      console.log("✅ Upload successful:", result);
+      statusText.textContent = `✅ Uploaded: ${result.filename}`;
+
+      // Transcription call
+      const transcribeForm = new FormData();
+      transcribeForm.append("file", audioBlob, "recording.webm");
+
+      const transcribeRes = await fetch("/transcribe/file", {
+        method: "POST",
+        body: transcribeForm,
+      });
+
+      const transcription = await transcribeRes.json();
+      const transcriptionBox = document.getElementById("transcription-result");
+
+      console.log("Transcription Result:", transcription.transcript);
+
+      transcriptionBox.innerHTML = `<p>📝 Transcription:</p><p>${transcription}</p>`;
     } catch (error) {
-      statusText.textContent = "❌ Upload failed.";
-      console.error("Upload error:", error);
+      statusText.textContent = "❌ Upload/Transcription failed.";
+      console.error("Error:", error);
     }
   };
 
   mediaRecorder.start();
   startBtn.disabled = true;
   stopBtn.disabled = false;
+  statusText.textContent = "🎙️ Recording...";
 });
 
 stopBtn.addEventListener("click", () => {
@@ -64,8 +80,7 @@ stopBtn.addEventListener("click", () => {
     return;
   }
 
-  console.log("Stopping audio recording...");
-
+  console.log("🛑 Stopping audio recording...");
   mediaRecorder.stop();
   startBtn.disabled = false;
   stopBtn.disabled = true;
